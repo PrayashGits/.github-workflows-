@@ -1,0 +1,14 @@
+# Use the official WordPress image as a base
+FROM wordpress:latest
+
+# Set environment variables (optional)
+ENV WORDPRESS_DB_HOST=mysql
+ENV WORDPRESS_DB_USER=admin
+ENV WORDPRESS_DB_PASSWORD=password123
+ENV WORDPRESS_DB_NAME=wordpress
+
+# Expose port 80
+EXPOSE 80
+
+# Run the command to start Apache in the background
+CMD ["apache2-foreground"]
