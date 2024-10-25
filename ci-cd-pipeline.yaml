@@ -1,0 +1,54 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker images
+        run: |
+          docker build -t my-wordpress-image ./wordpress
+          docker build -t my-mysql-image ./mysql
+
+      - name: Run tests
+        run: |
+          # Start the WordPress container in the background
+          docker run -d --name test-wordpress -e WORDPRESS_DB_HOST=${{dbsigma.cdsciuum4t92.us-west-2.rds.amazonaws.com}} -e WORDPRESS_DB_USER=${{dbsigma}} -e WORDPRESS_DB_PASSWORD=${{password123}} -p 8080:80 my-wordpress-image
+          sleep 10
+          curl --fail http://localhost:8080 || exit 1
+          docker stop test-wordpress && docker rm test-wordpress
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build  
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Deploy to AWS
+        env:
+          AWS_ACCESS_KEY_ID: ${{021891607547}}
+          AWS_SECRET_ACCESS_KEY: ${{IKFAQHCKI5GUVL43LLAFO6ZMT4}}
+          DB_USER: ${{admin}}
+          DB_PASSWORD: ${{password123}}
+          DB_NAME: ${{dbsigma}}
+          RDS_ENDPOINT: ${{dbsigma.cdsciuum4t92.us-west-2.rds.amazonaws.com}}
+        run: |
+          # SSH into the EC2 instance and deploy Docker containers
+          ssh -o StrictHostKeyChecking=no ec2-user@34.212.230.105 << 'EOF'
+            cd docker-compose.yml
+            docker-compose down
+            docker-compose up -d
+          EOF
